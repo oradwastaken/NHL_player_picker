@@ -1,14 +1,17 @@
 def main():
-    from hockey_stuff import Player, Position, SkaterStats, GoalieStats
+    from hockey_stuff import Player, Position, SkaterStats, GoalieStats, Rankings
     from datetime import date
 
-    player1 = Player('Brayden Point', 'Tampa Bay Lightning', date(1996, 3, 13), 1000, Position.RW, 56,
+    player1 = Player('Brayden Point', 'Tampa Bay Lightning', date(1996, 3, 13), 1100, Position.RW, 56,
                      SkaterStats(G=23, A=25, Blk=18, Hit=23))
     player2 = Player('Victor Olofsson', 'Buffalo Sabres', date(1995, 7, 18), 1000, Position.RW, 56,
                      SkaterStats(G=13, A=19, Blk=12, Hit=17))
 
-    print(player1.skater_stats)
-    # print(player2.G)
+    player_rankings = Rankings()
+    player_rankings.add_player(player1)
+    player_rankings.add_player(player2)
+
+    player_rankings.matchup(player1, player2)
 
 
 if __name__ == '__main__':
