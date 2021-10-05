@@ -27,6 +27,9 @@ class SkaterStats:
     def Pts(self):
         return self.G + self.A
 
+    def __str__(self):
+        return f"G:{self.G} | A:{self.A} | Blk:{self.Blk} | Hit:{self.Hit}"
+
 
 @dataclass
 class GoalieStats:
@@ -35,6 +38,9 @@ class GoalieStats:
     GAA: float
     SVPcT: float
     SO: int
+
+    def __str__(self):
+        return f"W:{self.W} | L:{self.L} | GAA:{self.GAA} | SVPcT:{self.SVPcT} | SO:{self.SO}"
 
 
 @dataclass
@@ -48,7 +54,10 @@ class Player:
     stats: Union[SkaterStats, GoalieStats]
 
     def __str__(self):
-        return f'{self.name} ({self.position}) ELO:{self.ELO_rating:.2f}'
+        return f'{self.name} ({self.position})'
+
+    def player_info(self):
+        return f'{self.name} ({self.position}), Age: {self.age} // {self.GP} GP | {self.stats}'
 
     @property
     def age(self):
@@ -69,9 +78,9 @@ class Rankings:
     def __str__(self):
         self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
 
-        ranking_str = 'Player rankings\n=============\n'
+        ranking_str = '\nPlayer rankings\n=============\n'
         for i, player in enumerate(self.player_list):
-            ranking_str = f'{ranking_str}{i + 1}: {player}\n'
+            ranking_str = f'{ranking_str}#{i + 1}: {player} ELO: {player.ELO_rating:.2f}\n'
         return ranking_str
 
     def add_player(self, new_player: Player):
@@ -85,10 +94,10 @@ class Rankings:
         E2 = R2 / (R1 + R2)
 
         print('Who would you rather have on your team?')
-        print(f'#1: {player1}')
-        print(f'#2: {player2}')
-        print(f"#3: I can't decide!")
-        print(f"#4: I don't know...")
+        print(f'(1) {player1.player_info()}')
+        print(f'(2) {player2.player_info()}')
+        print(f"(3) I can't decide!")
+        print(f"(4) I don't know...")
         while (userinput := input('(1/2/3/4)? ')) not in ['1', '2', '3', '4']:
             print('Please type 1, 2, 3 or 4:')
 
