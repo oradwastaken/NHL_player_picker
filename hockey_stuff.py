@@ -3,6 +3,7 @@ from enum import Enum, auto
 from datetime import date
 from typing import Optional, Union
 from random import sample
+import pickle
 
 
 class Position(Enum):
@@ -71,6 +72,7 @@ class Player:
 
 class Rankings:
     ELO_k = 40
+    filename = 'rankings.pickle'
 
     def __init__(self):
         self.player_list = []
@@ -85,6 +87,17 @@ class Rankings:
 
     def add_player(self, new_player: Player):
         self.player_list.append(new_player)
+
+    def read_list_from_file(self):
+        with open(self.filename, 'rb') as file:
+            self.player_list = pickle.load(file)
+
+    def write_list_to_file(self):
+        with open(self.filename, 'wb') as file:
+            pickle.dump(self.player_list, file)
+
+    def update(self):
+        pass
 
     def random_matchup(self):
         player1, player2 = sample(self.player_list, 2)
@@ -106,16 +119,13 @@ class Rankings:
             return
 
         if userinput == '1':
-            print(f'{player1.name} wins')
             S1, S2 = 1, 0
 
         if userinput == '2':
-            print(f'{player2.name} wins')
             S1, S2 = 0, 1
 
         if userinput == '3':
-            print(f"It's a tie!")
-            S1, S2 = 1/2, 1/2
+            S1, S2 = 1 / 2, 1 / 2
 
         player1.set_rating(player1.ELO_rating + self.ELO_k * (S1 - E1))
         player2.set_rating(player2.ELO_rating + self.ELO_k * (S2 - E2))
