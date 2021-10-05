@@ -67,9 +67,9 @@ class Rankings:
         self.player_list = []
 
     def __str__(self):
-        self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating)
+        self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
 
-        ranking_str = ''
+        ranking_str = 'Player rankings\n=============\n'
         for i, player in enumerate(self.player_list):
             ranking_str = f'{ranking_str}{i + 1}: {player}\n'
         return ranking_str
@@ -84,12 +84,17 @@ class Rankings:
         E1 = R1 / (R1 + R2)
         E2 = R2 / (R1 + R2)
 
+        print('Who would you rather have on your team?')
         print(f'#1: {player1}')
         print(f'#2: {player2}')
-        print(f'#3: TIE!')
-        print('Who would you rather have on your team? Player #1 or #2?')
-        while (userinput := input('(1/2/3)? ')) not in ['1', '2', '3']:
-            print('Please type 1, 2 or 3:')
+        print(f"#3: I can't decide!")
+        print(f"#4: I don't know...")
+        while (userinput := input('(1/2/3/4)? ')) not in ['1', '2', '3', '4']:
+            print('Please type 1, 2, 3 or 4:')
+
+        if userinput == '4':
+            print(f"OK I'll do nothing!")
+            return
 
         if userinput == '1':
             print(f'{player1.name} wins')
@@ -97,15 +102,11 @@ class Rankings:
 
         if userinput == '2':
             print(f'{player2.name} wins')
-            S1, S2 = 1/2, 1/2
+            S1, S2 = 0, 1
 
         if userinput == '3':
             print(f"It's a tie!")
-            S1, S2 = 0, 1
+            S1, S2 = 1/2, 1/2
 
         player1.set_rating(player1.ELO_rating + self.ELO_k * (S1 - E1))
         player2.set_rating(player2.ELO_rating + self.ELO_k * (S2 - E2))
-
-        print("\nNew values:")
-        print(player1)
-        print(player2)
