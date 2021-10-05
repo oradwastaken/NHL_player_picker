@@ -80,21 +80,22 @@ class Rankings:
     def __str__(self):
         self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
 
-        ranking_str = '\nPlayer rankings\n=============\n'
+        ranking_str = '\nPlayer rankings\n===============\n'
         for i, player in enumerate(self.player_list):
-            ranking_str = f'{ranking_str}#{i + 1}: {player} ELO: {player.ELO_rating:.2f}\n'
+            ranking_str = f'{ranking_str}#{i + 1}: {player} | ELO: {player.ELO_rating:.2f}\n'
         return ranking_str
 
     def add_player(self, new_player: Player):
-        self.player_list.append(new_player)
-
-    def read_list_from_file(self):
-        with open(self.filename, 'rb') as file:
-            self.player_list = pickle.load(file)
+        if new_player not in self.player_list:
+            self.player_list.append(new_player)
 
     def write_list_to_file(self):
         with open(self.filename, 'wb') as file:
             pickle.dump(self.player_list, file)
+
+    def read_list_from_file(self):
+        with open(self.filename, 'rb') as file:
+            self.player_list = pickle.load(file)
 
     def update(self):
         pass

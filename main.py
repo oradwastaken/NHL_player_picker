@@ -22,6 +22,5 @@ def main():
         player_rankings.write_list_to_file()
 
 
-
 if __name__ == '__main__':
     main()
