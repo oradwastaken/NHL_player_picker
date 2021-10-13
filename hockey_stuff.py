@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from datetime import date
-from typing import Optional, Union
+from typing import Union
 from random import sample
 import pickle
+import csv
 
 
 class Position(Enum):
@@ -16,9 +17,15 @@ class Position(Enum):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def from_string(position_string):
+        conversion_table = {'C': Position.C, 'LW': Position.LW, 'RW': Position.RW, 'D': Position.D, 'G': Position.G}
+        return conversion_table[position_string]
+
 
 @dataclass
 class SkaterStats:
+    GP: int
     G: int
     A: int
     Blk: int
@@ -29,11 +36,15 @@ class SkaterStats:
         return self.G + self.A
 
     def __str__(self):
-        return f"G:{self.G} | A:{self.A} | Blk:{self.Blk} | Hit:{self.Hit}"
+        return f"GP:{self.GP} | G:{self.G} | A:{self.A} | Blk:{self.Blk} | Hit:{self.Hit}"
+
+    def to_list(self):
+        return [self.GP, self.G, self.A, self.Blk, self.Hit]
 
 
 @dataclass
 class GoalieStats:
+    GP: int
     W: int
     L: int
     GAA: float
@@ -41,7 +52,10 @@ class GoalieStats:
     SO: int
 
     def __str__(self):
-        return f"W:{self.W} | L:{self.L} | GAA:{self.GAA} | SVPcT:{self.SVPcT} | SO:{self.SO}"
+        return f"GP:{self.GP} | W:{self.W} | L:{self.L} | GAA:{self.GAA} | SVPcT:{self.SVPcT} | SO:{self.SO}"
+
+    def to_list(self):
+        return [self.GP, self.W, self.L, self.GAA, self.SVPcT, self.SO]
 
 
 @dataclass
@@ -51,14 +65,16 @@ class Player:
     DOB: date
     ELO_rating: float
     position: Position
-    GP: int
     stats: Union[SkaterStats, GoalieStats]
 
     def __str__(self):
         return f'{self.name} ({self.position})'
 
     def player_info(self):
-        return f'{self.name} ({self.position}), Age: {self.age} // {self.GP} GP | {self.stats}'
+        return f'{self.name} ({self.position}), Age: {self.age} // {self.stats}'
+
+    def to_list(self):
+        return [self.name, self.team, self.DOB, self.ELO_rating, self.position, *self.stats.to_list()]
 
     @property
     def age(self):
@@ -69,16 +85,20 @@ class Player:
     def set_rating(self, new_rating):
         self.ELO_rating = new_rating
 
+    def to_csv(self, filename):
+        with open(filename, 'a') as csvfile:
+            playerwriter = csv.writer(csvfile)
+            playerwriter.writerow(self.to_list())
+
 
 class Rankings:
     ELO_k = 40
-    filename = 'rankings.pickle'
 
     def __init__(self):
         self.player_list = []
 
     def __str__(self):
-        self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
+        self.sort_list()
 
         ranking_str = '\nPlayer rankings\n===============\n'
         for i, player in enumerate(self.player_list):
@@ -89,12 +109,37 @@ class Rankings:
         if new_player not in self.player_list:
             self.player_list.append(new_player)
 
-    def write_list_to_file(self):
-        with open(self.filename, 'wb') as file:
-            pickle.dump(self.player_list, file)
+    def sort_list(self):
+        self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
 
-    def read_list_from_file(self):
-        with open(self.filename, 'rb') as file:
+    def to_csv(self, filename):
+        self.sort_list()
+        with open(filename, 'wb') as file:
+            for player in self.player_list:
+                player.to_csv(filename)
+
+    def from_csv(self, filename):
+        with open(filename, 'r') as csvfile:
+            playerreader = csv.reader(csvfile)
+            for row in playerreader:
+                player_position = Position.from_string(row[4])
+                if player_position == Position.G:
+                    new_player = Player(row[0], row[1], date(1984, 11, 28), float(row[3]), player_position,
+                                        GoalieStats(GP=int(row[5]), W=int(row[6]), L=int(row[7]), GAA=float(row[8]),
+                                                    SVPcT=float(row[9]), SO=int(row[10])))
+                else:
+                    new_player = Player(row[0], row[1], date(1984, 11, 28), float(row[3]), player_position,
+                                        SkaterStats(GP=int(row[5]), G=int(row[6]), A=int(row[7]), Blk=int(row[8]),
+                                                    Hit=int(row[9])))
+                self.player_list.append(new_player)
+
+    def to_pickle(self, filename):
+        self.sort_list()
+        with open(filename, 'wb') as file:
+            pickle.dump(self.player_list, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def from_pickle(self, filename):
+        with open(filename, 'rb') as file:
             self.player_list = pickle.load(file)
 
     def update(self):
