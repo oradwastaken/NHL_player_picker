@@ -49,14 +49,8 @@ class Player:
     position: Position
     stats: Union[SkaterStats, GoalieStats]
 
-    def __str__(self):
-        return f'{self.name} ({self.position})'
-
-    def player_info(self):
-        return f'{self.name} ({self.position}), Age: {self.age} // {self.stats}'
-
-    def to_list(self):
-        return [self.name, self.team, self.DOB, self.ELO_rating, self.position, *self.stats.to_list()]
+    def set_rating(self, new_rating):
+        self.ELO_rating = new_rating
 
     @property
     def age(self):
@@ -64,8 +58,14 @@ class Player:
         today = date.today()
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
-    def set_rating(self, new_rating):
-        self.ELO_rating = new_rating
+    def player_info(self):
+        return f'{self.name} ({self.position}), Age: {self.age} // {self.stats}'
+
+    def __str__(self):
+        return f'{self.name} ({self.position})'
+
+    def to_list(self):
+        return [self.name, self.team, self.DOB, self.ELO_rating, self.position, *self.stats.to_list()]
 
     def to_csv(self, filename):
         with open(filename, 'a') as csvfile:

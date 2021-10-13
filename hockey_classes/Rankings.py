@@ -1,5 +1,5 @@
 import csv
-import datetime
+from datetime import date, datetime, timedelta
 import pickle
 from random import sample
 from urllib.request import urlopen
@@ -31,14 +31,16 @@ class Rankings:
             self.player_list.append(new_player)
 
     def clean_list(self):
+        # TODO: Remove duplicates
         self.player_list = list(filter(lambda player_temp: player_temp.stats.GP > self.min_GP, self.player_list))
         self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
 
     def to_csv(self, filename):
         self.clean_list()
-        with open(filename, 'wb') as file:
+        with open(filename, 'w') as csvfile:
+            playerwriter = csv.writer(csvfile)
             for player in self.player_list:
-                player.to_csv(filename)
+                playerwriter.writerow(player.to_list())
 
     def from_csv(self, filename):
         with open(filename, 'r') as csvfile:
@@ -66,7 +68,10 @@ class Rankings:
             self.player_list = pickle.load(file)
 
     def from_hockey_reference(self):
-        self.player_list = []
+        self.player_list = [*self.import_skaters_from_hockey_reference(), *self.import_goalies_from_hockey_reference()]
+
+    @staticmethod
+    def import_skaters_from_hockey_reference():
         url_skaters = 'https://www.hockey-reference.com/leagues/NHL_2021_skaters.html'
         page = urlopen(url_skaters)
         html = page.read().decode("utf-8")
@@ -76,6 +81,7 @@ class Rankings:
         stats_rows = stats_table.findChildren(['th', 'tr'])
 
         stat_cells = ['player', 'age', 'team_id', 'pos', 'games_played', 'goals', 'assists', 'blocks', 'hits']
+        player_list = []
         for row in stats_rows:
             player_stats = row.find_all('td', {'data-stat': stat_cells})
             if not player_stats:  # Go to the next row if there's nothing here
@@ -88,13 +94,48 @@ class Rankings:
             player_name, player_age, team_name, pos, GP, G, A, Blk, Hit = player_stats
 
             # Fix types
-            player_DOB = datetime.datetime.now() - datetime.timedelta(days=365 * int(player_age))
+            player_DOB = date.today() - timedelta(days=365 * int(player_age))
             player_position = Position.from_string(pos)
             GP, G, A, Blk, Hit = int(GP), int(G), int(A), int(Blk), int(Hit)
 
             new_player = Player(player_name, team_name, player_DOB, 1000, player_position,
                                 SkaterStats(GP=GP, G=G, A=A, Blk=Blk, Hit=Hit))
-            self.player_list.append(new_player)
+            player_list.append(new_player)
+        return player_list
+
+    @staticmethod
+    def import_goalies_from_hockey_reference():
+        url_skaters = 'https://www.hockey-reference.com/leagues/NHL_2021_goalies.html'
+        page = urlopen(url_skaters)
+        html = page.read().decode("utf-8")
+        soup = BeautifulSoup(html, "html.parser")
+
+        stats_table = soup.findChildren('tbody')[0]
+        stats_rows = stats_table.findChildren(['th', 'tr'])
+
+        stat_cells = ['player', 'age', 'team_id', 'games_goalie', 'wins_goalie', 'losses_goalie', 'save_pct',
+                      'goals_against_avg', 'shutouts']
+        player_list = []
+        for row in stats_rows:
+            player_stats = row.find_all('td', {'data-stat': stat_cells})
+            if not player_stats:  # Go to the next row if there's nothing here
+                continue
+
+            # Convert to text:
+            player_stats = [item.text for item in player_stats]
+
+            # Unpack:
+            player_name, player_age, team_name, GP, W, L, SVPcT, GAA, SO = player_stats
+
+            # Fix types
+            player_DOB = date.today() - timedelta(days=365 * int(player_age))
+            player_position = Position.from_string('G')
+            GP, W, L, SVPcT, GAA, SO = int(GP), int(W), int(L), float(SVPcT), float(GAA), int(SO)
+
+            new_player = Player(player_name, team_name, player_DOB, 1000, player_position,
+                                GoalieStats(GP=GP, W=W, L=L, SVPcT=SVPcT, GAA=GAA, SO=SO))
+            player_list.append(new_player)
+        return player_list
 
     def random_matchup(self):
         player1, player2 = sample(self.player_list, 2)
