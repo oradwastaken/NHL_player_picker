@@ -1,34 +1,41 @@
+import csv
+import datetime
+import pickle
+from random import sample
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
+
 from hockey_classes.Player import Player, SkaterStats, GoalieStats
 from hockey_classes.Position import Position
-from datetime import date, datetime
-from random import sample
-import pickle
-import csv
 
 
 class Rankings:
-    ELO_k = 40
-
-    def __init__(self):
+    def __init__(self, ELO_k=40, min_GP=20):
         self.player_list = []
+        self.ELO_k = ELO_k
+        self.min_GP = min_GP
 
     def __str__(self):
-        self.sort_list()
+        self.clean_list()
 
         ranking_str = '\nPlayer rankings\n===============\n'
         for i, player in enumerate(self.player_list):
             ranking_str = f'{ranking_str}#{i + 1}: {player} | ELO: {player.ELO_rating:.2f}\n'
+            if i == 49:
+                break
         return ranking_str
 
     def add_player(self, new_player: Player):
         if new_player not in self.player_list:
             self.player_list.append(new_player)
 
-    def sort_list(self):
+    def clean_list(self):
+        self.player_list = list(filter(lambda player_temp: player_temp.stats.GP > self.min_GP, self.player_list))
         self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
 
     def to_csv(self, filename):
-        self.sort_list()
+        self.clean_list()
         with open(filename, 'wb') as file:
             for player in self.player_list:
                 player.to_csv(filename)
@@ -50,7 +57,7 @@ class Rankings:
                 self.player_list.append(new_player)
 
     def to_pickle(self, filename):
-        self.sort_list()
+        self.clean_list()
         with open(filename, 'wb') as file:
             pickle.dump(self.player_list, file, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -58,8 +65,36 @@ class Rankings:
         with open(filename, 'rb') as file:
             self.player_list = pickle.load(file)
 
-    def update(self):
-        pass
+    def from_hockey_reference(self):
+        self.player_list = []
+        url_skaters = 'https://www.hockey-reference.com/leagues/NHL_2021_skaters.html'
+        page = urlopen(url_skaters)
+        html = page.read().decode("utf-8")
+        soup = BeautifulSoup(html, "html.parser")
+
+        stats_table = soup.findChildren('tbody')[0]
+        stats_rows = stats_table.findChildren(['th', 'tr'])
+
+        stat_cells = ['player', 'age', 'team_id', 'pos', 'games_played', 'goals', 'assists', 'blocks', 'hits']
+        for row in stats_rows:
+            player_stats = row.find_all('td', {'data-stat': stat_cells})
+            if not player_stats:  # Go to the next row if there's nothing here
+                continue
+
+            # Convert to text:
+            player_stats = [item.text for item in player_stats]
+
+            # Unpack:
+            player_name, player_age, team_name, pos, GP, G, A, Blk, Hit = player_stats
+
+            # Fix types
+            player_DOB = datetime.datetime.now() - datetime.timedelta(days=365 * int(player_age))
+            player_position = Position.from_string(pos)
+            GP, G, A, Blk, Hit = int(GP), int(G), int(A), int(Blk), int(Hit)
+
+            new_player = Player(player_name, team_name, player_DOB, 1000, player_position,
+                                SkaterStats(GP=GP, G=G, A=A, Blk=Blk, Hit=Hit))
+            self.player_list.append(new_player)
 
     def random_matchup(self):
         player1, player2 = sample(self.player_list, 2)
