@@ -1,5 +1,5 @@
 def main():
-    from hockey_stuff import Player, Position, SkaterStats, GoalieStats, Rankings
+    from hockey_classes import Rankings, Position, Player, SkaterStats, GoalieStats
     from datetime import date
 
     # a = Player('Brayden Point', 'Tampa Bay Lightning', date(1996, 3, 13), 1000, Position.RW,
