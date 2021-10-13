@@ -1,6 +1,6 @@
 from hockey_classes.Player import Player, SkaterStats, GoalieStats
 from hockey_classes.Position import Position
-from datetime import date
+from datetime import date, datetime
 from random import sample
 import pickle
 import csv
@@ -38,12 +38,13 @@ class Rankings:
             playerreader = csv.reader(csvfile)
             for row in playerreader:
                 player_position = Position.from_string(row[4])
+                player_DOB = datetime.strptime(row[2], "%Y-%m-%d").date()
                 if player_position == Position.G:
-                    new_player = Player(row[0], row[1], date(1984, 11, 28), float(row[3]), player_position,
+                    new_player = Player(row[0], row[1], player_DOB, float(row[3]), player_position,
                                         GoalieStats(GP=int(row[5]), W=int(row[6]), L=int(row[7]), GAA=float(row[8]),
                                                     SVPcT=float(row[9]), SO=int(row[10])))
                 else:
-                    new_player = Player(row[0], row[1], date(1984, 11, 28), float(row[3]), player_position,
+                    new_player = Player(row[0], row[1], player_DOB, float(row[3]), player_position,
                                         SkaterStats(GP=int(row[5]), G=int(row[6]), A=int(row[7]), Blk=int(row[8]),
                                                     Hit=int(row[9])))
                 self.player_list.append(new_player)
