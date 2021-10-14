@@ -17,7 +17,7 @@ class Rankings:
         self.min_GP = min_GP
 
     def __str__(self):
-        self.clean_list()
+        self.sort_list()
 
         ranking_str = '\nPlayer rankings\n===============\n'
         for i, player in enumerate(self.player_list):
@@ -31,9 +31,30 @@ class Rankings:
             self.player_list.append(new_player)
 
     def clean_list(self):
-        # TODO: Remove duplicates
-        self.player_list = list(filter(lambda player_temp: player_temp.stats.GP > self.min_GP, self.player_list))
+        self.minimum_games_played()
+        self.remove_duplicates()
+        self.sort_list()
+
+    def remove_duplicates(self):
+        # Find players that have a "TOT" in their team name
+        duplicate_player_names = [player.name for player in self.player_list if player.team == 'TOT']
+
+        # Remove the duplicates from the list
+        unique_players = []
+        for player in self.player_list:
+            if player.name in duplicate_player_names:
+                if player.team == 'TOT':
+                    unique_players.append(player)
+            else:
+                unique_players.append(player)
+        self.player_list = unique_players
+
+    def sort_list(self):
+        self.player_list.sort(key=lambda player_temp: player_temp.name)
         self.player_list.sort(key=lambda player_temp: player_temp.ELO_rating, reverse=True)
+
+    def minimum_games_played(self):
+        self.player_list = list(filter(lambda player_temp: player_temp.stats.GP > self.min_GP, self.player_list))
 
     def to_csv(self, filename):
         self.clean_list()
@@ -69,6 +90,7 @@ class Rankings:
 
     def from_hockey_reference(self):
         self.player_list = [*self.import_skaters_from_hockey_reference(), *self.import_goalies_from_hockey_reference()]
+        self.clean_list()
 
     @staticmethod
     def import_skaters_from_hockey_reference():
