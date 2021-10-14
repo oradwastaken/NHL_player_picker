@@ -14,7 +14,7 @@ class SkaterStats:
     Hit: int
 
     @property
-    def Pts(self):
+    def P(self):
         return self.G + self.A
 
     def __str__(self):

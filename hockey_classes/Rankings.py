@@ -189,3 +189,33 @@ class Rankings:
 
         player1.set_rating(player1.ELO_rating + self.ELO_k * (S1 - E1))
         player2.set_rating(player2.ELO_rating + self.ELO_k * (S2 - E2))
+
+    def simulate_matchups(self, number_of_games):
+        num_goalie_games = 0
+        num_skater_games = 0
+        while num_goalie_games < int(number_of_games * 15 / 16) or (num_skater_games < int(number_of_games / 16)):
+            player1, player2 = sample(self.player_list, 2)
+
+            if player1.position != player2.position:
+                continue
+
+            R1 = 10 ** (player1.ELO_rating / 400)
+            R2 = 10 ** (player2.ELO_rating / 400)
+            E1 = R1 / (R1 + R2)
+            E2 = R2 / (R1 + R2)
+
+            if player1.position == Position.G:
+                num_goalie_games += 1
+                if player1.stats.SVPcT > player2.stats.SVPcT:
+                    S1, S2 = 1, 0
+                else:
+                    S2, S1 = 1, 0
+            elif player1.position != Position.G:
+                num_skater_games += 1
+                if player1.stats.P > player2.stats.P:
+                    S1, S2 = 1, 0
+                else:
+                    S2, S1 = 1, 0
+
+            player1.set_rating(player1.ELO_rating + self.ELO_k * (S1 - E1))
+            player2.set_rating(player2.ELO_rating + self.ELO_k * (S2 - E2))

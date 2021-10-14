@@ -3,8 +3,11 @@ def main():
 
     # Load Ranking data from CSV file
     player_rankings = Rankings()
-    # player_rankings.from_hockey_reference()
-    player_rankings.from_csv('rankings.csv')
+
+    player_rankings.from_hockey_reference()
+    player_rankings.simulate_matchups(1_000_000)
+
+    # player_rankings.from_csv('rankings.csv')
 
     while True:
         print(player_rankings)
